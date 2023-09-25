@@ -4,7 +4,7 @@ This little tool helps you to create `String()`, `Marshal()` and `Unmarshal()` m
 
 The app inspired by Google's [Sringer](https://pkg.go.dev/golang.org/x/tools/cmd/stringer) tool.
 
-(!) The tool's functionality is a little bit reduced as of yet.  
+:exclamation: The tool's functionality is a little bit reduced as of yet.  
 See the TODO list below to see what's on the go.
 
 As of yet, **it will work only** for enums declared like this:
