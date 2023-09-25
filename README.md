@@ -32,7 +32,7 @@ const (
 ## Installation
 
 ```
-go install https://github.com/zaffka/iotas@latest
+go install github.com/zaffka/iotas@latest
 ```
 
 ## How it works
