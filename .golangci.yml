@@ -1,0 +1,14 @@
+run:
+  timeout: 5m
+skip-dirs-use-default: true
+linters:
+  fast: false
+  enable-all: true
+  disable:
+    - exhaustivestruct
+    - exhaustruct
+    - forbidigo
+    - depguard
+    - varnamelen
+    - gofumpt # disabled till that'll be fixed https://github.com/golangci/golangci-lint/issues/4004
+
