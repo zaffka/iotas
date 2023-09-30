@@ -84,8 +84,8 @@ func main() {
 	gen.Generator{
 		AppVersion: appVersion,
 		DirName:    dir,
-		PkgName:    parser.PkgName,
-		Data:       parser.ConstantsByType,
+		PkgName:    parser.GetPackageName(),
+		Data:       parser.GetConstantsByType(),
 		Tpl:        tpl,
 		Logger:     log,
 	}.Exec()

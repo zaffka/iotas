@@ -28,43 +28,51 @@ func (p *Parser) findConstantDecl(astNode ast.Node) bool {
 	}
 
 	// finding a constant sequence and its type
-	sequenceTypeName, constants, err := getTypeAndConstantNames(declaration.Specs)
+	typeCons, err := getTypeAndConstantNames(declaration.Specs)
+	if errors.Is(err, errSkipToken) {
+		return true
+	}
+
+	// skip unnecessary
+	savedFirst, ok := p.constantsByType[typeCons.typeName]
+	if !ok {
+		return true
+	}
+
+	// handling error if the type is required
 	if err != nil {
 		p.errs = append(p.errs, fmt.Errorf("constant parsing finished with an error: %w", err))
 
 		return true
 	}
 
-	savedFirst, ok := p.ConstantsByType[sequenceTypeName]
 	// if second block of constants with the same type name found
 	// then we delete the entire type keeping an error
-	if ok && savedFirst != nil {
-		delete(p.ConstantsByType, sequenceTypeName)
+	if savedFirst != nil {
+		delete(p.constantsByType, typeCons.typeName)
 
-		p.errs = append(p.errs, Errors{iotaDuplicatedSequence, sequenceTypeName})
+		p.errs = append(p.errs, Errors{iotaDuplicatedSequence, typeCons.typeName})
 
 		return true
 	}
 
-	if ok {
-		p.ConstantsByType[sequenceTypeName] = constants
-	}
+	// if we need such a type and there were no const block previously found
+	// keeping the constants
+	p.constantsByType[sequenceTypeName] = constants
 
 	return false
 }
 
 // getTypeAndConstantNames returns constant slice with its type name.
-func getTypeAndConstantNames(specs []ast.Spec) (string, []string, error) {
+func getTypeAndConstantNames(specs []ast.Spec) (*typeCons, error) {
 	if len(specs) == 0 {
-		return "", nil, Errors{emptySpecs}
+		return nil, Errors{emptySpecs}
 	}
 
-	typeName, firstConstName, err := getFirst(specs[0])
+	tCons, err := getFirstConst(specs[0])
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to get a first iota const: %w", err)
+		return tCons, fmt.Errorf("failed to get a first iota const: %w", err)
 	}
-
-	res := []string{firstConstName}
 
 	for _, spec := range specs[1:] {
 		next, ok := getNext(spec)
@@ -72,43 +80,54 @@ func getTypeAndConstantNames(specs []ast.Spec) (string, []string, error) {
 			break
 		}
 
-		res = append(res, next)
+		tCons.conNames = append(tCons.conNames, next)
 	}
 
-	return typeName, res, nil
+	return tCons, nil
 }
 
-// getFirst gets first constant in a block with name and its type name.
-func getFirst(spec ast.Spec) (string, string, error) {
+type typeCons struct {
+	typeName string
+	conNames []string
+}
+
+// getFirstConst gets first constant in a block with name and its type name.
+func getFirstConst(spec ast.Spec) (*typeCons, error) {
 	val, ok := spec.(*ast.ValueSpec)
 	if !ok {
-		return "", "", Errors{isNotAValueSpec, fmt.Sprintf("%t", spec)}
+		return nil, errSkipToken
 	}
 
 	if val.Type == nil {
-		return "", "", Errors{isUntypedValueSpec}
+		return nil, errSkipToken
 	}
 
 	if len(val.Values) == 0 {
-		return "", "", Errors{noValuesAtValueSpec}
+		return nil, errSkipToken
 	}
 
 	valType, ok := val.Type.(*ast.Ident)
 	if !ok {
-		return "", "", Errors{isNotAnIdentNode, fmt.Sprintf("%t", val.Type)}
+		return nil, errSkipToken
+	}
+
+	fc := &typeCons{
+		typeName: valType.Name,
 	}
 
 	valValue, ok := val.Values[0].(*ast.Ident)
 	if !ok || valValue.Name != iotaName {
-		return "", "", Errors{iotaIdentExpected}
+		return fc, Errors{iotaIdentExpected}
 	}
 
 	constName, err := getFirstName(val.Names)
 	if err != nil {
-		return "", "", err
+		return fc, err
 	}
 
-	return valType.Name, constName, nil
+	fc.conNames = []string{constName}
+
+	return fc, nil
 }
 
 // getNext gets a constant name from the spec.

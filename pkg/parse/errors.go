@@ -1,6 +1,9 @@
 package parse
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 // Errors holds a set of strings with errors found while parsing the ast-tree.
 type Errors []string
@@ -24,3 +27,5 @@ const (
 
 	noValuesAtValueSpec = "no values in spec"
 )
+
+var errSkipToken = errors.New("skip needless token")

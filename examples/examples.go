@@ -2,7 +2,7 @@ package examples
 
 // MatrixType represents mobile phone's LCD matrix type.
 //
-//go:generate enums -types=MatrixType
+//go:generate enums -type=MatrixType
 type MatrixType uint8
 
 const (

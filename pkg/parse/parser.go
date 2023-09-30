@@ -32,7 +32,7 @@ func NewParser(dir string, typeNames []string) (*Parser, error) {
 		return nil, fmt.Errorf("package loading finished with an error: %w", pkg.Errors[0])
 	}
 
-	tnMap := make(map[string][]string, len(typeNames))
+	tnMap := make(constantsByType, len(typeNames))
 	for _, tn := range typeNames {
 		_, exist := tnMap[tn]
 		if exist {
@@ -43,8 +43,8 @@ func NewParser(dir string, typeNames []string) (*Parser, error) {
 	}
 
 	return &Parser{
-		PkgName:         pkg.Name,
-		ConstantsByType: tnMap,
+		pkgName:         pkg.Name,
+		constantsByType: tnMap,
 
 		astFiles: pkg.Syntax,
 	}, nil
@@ -52,9 +52,19 @@ func NewParser(dir string, typeNames []string) (*Parser, error) {
 
 // Parser holds a raw ast-tree data with pre-initialized map for constant names grouped by type name.
 type Parser struct {
-	PkgName         string
+	pkgName         string
 	astFiles        []*ast.File
-	ConstantsByType map[string][]string
+	constantsByType constantsByType
 
 	errs []error
 }
+
+func (p Parser) GetPackageName() string {
+	return p.pkgName
+}
+
+func (p Parser) GetConstantsByType() map[string][]string {
+	return p.constantsByType
+}
+
+type constantsByType map[string][]string
