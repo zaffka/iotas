@@ -2,7 +2,6 @@ package parse
 
 import (
 	"errors"
-	"fmt"
 	"go/ast"
 	"go/token"
 )
@@ -11,14 +10,23 @@ const (
 	iotaName = "iota"
 )
 
+type typeCons struct {
+	typeName string
+	conNames []string
+}
+
+type err string
+
+func (e err) Error() string {
+	return string(e)
+}
+
 // Parse inspects nodes of the ast-tree, gets constant blocks,
 // finds necessary types and return errors if gets any in process.
-func (p *Parser) Parse() error {
-	for _, file := range p.astFiles {
+func (p *Parser) Parse() {
+	for _, file := range p.pkg.astFiles {
 		ast.Inspect(file, p.findConstantDecl)
 	}
-
-	return errors.Join(p.errs...)
 }
 
 func (p *Parser) findConstantDecl(astNode ast.Node) bool {
@@ -28,20 +36,20 @@ func (p *Parser) findConstantDecl(astNode ast.Node) bool {
 	}
 
 	// finding a constant sequence and its type
-	typeCons, err := getTypeAndConstantNames(declaration.Specs)
+	tc, err := getTypeAndConstantNames(declaration.Specs)
 	if errors.Is(err, errSkipToken) {
 		return true
 	}
 
 	// skip unnecessary
-	savedFirst, ok := p.constantsByType[typeCons.typeName]
+	savedFirst, ok := p.constantsByType[tc.typeName]
 	if !ok {
 		return true
 	}
 
-	// handling error if the type is required
+	// handling an error if type is required
 	if err != nil {
-		p.errs = append(p.errs, fmt.Errorf("constant parsing finished with an error: %w", err))
+		p.log.Err(err).Str("type_name", tc.typeName).Msg("parsing interrupted")
 
 		return true
 	}
@@ -49,16 +57,14 @@ func (p *Parser) findConstantDecl(astNode ast.Node) bool {
 	// if second block of constants with the same type name found
 	// then we delete the entire type keeping an error
 	if savedFirst != nil {
-		delete(p.constantsByType, typeCons.typeName)
-
-		p.errs = append(p.errs, Errors{iotaDuplicatedSequence, typeCons.typeName})
+		p.log.Warn().Str("type_name", tc.typeName).Msg(iotaDuplicatedSequenceSkipped)
 
 		return true
 	}
 
 	// if we need such a type and there were no const block previously found
 	// keeping the constants
-	p.constantsByType[sequenceTypeName] = constants
+	p.constantsByType[tc.typeName] = tc.conNames
 
 	return false
 }
@@ -66,12 +72,12 @@ func (p *Parser) findConstantDecl(astNode ast.Node) bool {
 // getTypeAndConstantNames returns constant slice with its type name.
 func getTypeAndConstantNames(specs []ast.Spec) (*typeCons, error) {
 	if len(specs) == 0 {
-		return nil, Errors{emptySpecs}
+		return nil, err(emptySpecs)
 	}
 
-	tCons, err := getFirstConst(specs[0])
+	tc, err := getFirstConst(specs[0])
 	if err != nil {
-		return tCons, fmt.Errorf("failed to get a first iota const: %w", err)
+		return tc, err
 	}
 
 	for _, spec := range specs[1:] {
@@ -80,15 +86,10 @@ func getTypeAndConstantNames(specs []ast.Spec) (*typeCons, error) {
 			break
 		}
 
-		tCons.conNames = append(tCons.conNames, next)
+		tc.conNames = append(tc.conNames, next)
 	}
 
-	return tCons, nil
-}
-
-type typeCons struct {
-	typeName string
-	conNames []string
+	return tc, nil
 }
 
 // getFirstConst gets first constant in a block with name and its type name.
@@ -117,7 +118,7 @@ func getFirstConst(spec ast.Spec) (*typeCons, error) {
 
 	valValue, ok := val.Values[0].(*ast.Ident)
 	if !ok || valValue.Name != iotaName {
-		return fc, Errors{iotaIdentExpected}
+		return fc, err(iotaIdentExpected)
 	}
 
 	constName, err := getFirstName(val.Names)
@@ -153,7 +154,7 @@ func getNext(spec ast.Spec) (string, bool) {
 // getFirstName gets a name from a slice of idents.
 func getFirstName(idents []*ast.Ident) (string, error) {
 	if len(idents) == 0 {
-		return "", Errors{emptyIdentList}
+		return "", err(emptyIdentList)
 	}
 
 	return idents[0].Name, nil

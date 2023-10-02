@@ -36,3 +36,10 @@ const (
 	TestType4X TestType4 = iota
 	TestType4Y TestType4 = iota
 )
+
+type TestType5 int
+
+const (
+	SomeConst            = 1
+	TestType5X TestType5 = iota
+)

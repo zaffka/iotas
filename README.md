@@ -10,7 +10,7 @@ Check the [TODO list](#todos) below to see what's on the go.
 As of yet, **it will work only** for enums declared like this:
 
 ```
-const (
+const ( <-- block must be started from zero-iota value with necessary type at the first place
 	Unknown MatrixType = iota
 	OLED
 	AMOLED

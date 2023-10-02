@@ -3,6 +3,7 @@ package parse_test
 import (
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"github.com/zaffka/iotas/pkg/parse"
 )
@@ -54,7 +55,11 @@ func TestNewParser(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := parse.NewParser(tt.args.dir, tt.args.typeNames)
+			got, err := parse.NewParser(parse.Deps{
+				Dir:       tt.args.dir,
+				TypeNames: tt.args.typeNames,
+				Logger:    zerolog.Nop(),
+			})
 			if tt.wantErr {
 				require.NotNil(t, err)
 			}
