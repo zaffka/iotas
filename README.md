@@ -7,10 +7,10 @@ The app inspired by Google's [Sringer](https://pkg.go.dev/golang.org/x/tools/cmd
 :exclamation: The tool's functionality is a little bit reduced as of yet.  
 Check the [TODO list](#todos) below to see what's on the go.
 
-As of yet, **it will work only** for enums declared like this:
+As of yet, **it will work only** for enums declared within the whole block of constants with zero-iota value at the first place:
 
 ```
-const ( <-- block must be started from zero-iota value with necessary type at the first place
+const (
 	Unknown MatrixType = iota
 	OLED
 	AMOLED
