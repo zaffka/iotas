@@ -1,5 +1,7 @@
 run:
   timeout: 5m
+  skip-files:
+    - ".*\\_test\\.go$"
 skip-dirs-use-default: true
 linters:
   fast: false
@@ -11,4 +13,13 @@ linters:
     - depguard
     - varnamelen
     - gofumpt # disabled till that'll be fixed https://github.com/golangci/golangci-lint/issues/4004
+    - nosnakecase
+    - maligned
+    - structcheck
+    - scopelint
+    - deadcode
+    - ifshort
+    - golint
+    - varcheck
+    - interfacer
 

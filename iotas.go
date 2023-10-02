@@ -59,17 +59,15 @@ func main() {
 	log.Info().
 		Str(dirNameMsg, workDir).
 		Str(appVersionMsg, appVersion).
-		Msg("Start parsing a directory")
+		Msg("Start parsing...")
 
-	parser, err := parse.NewParser(dir, typeNames)
+	parser, err := parse.NewParser(parse.Deps{
+		Dir:       dirNameMsg,
+		TypeNames: typeNames,
+		Logger:    log,
+	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to set-up a parser")
-
-		return
-	}
-
-	if err := parser.Parse(); err != nil {
-		log.Error().Err(err).Msg("Parsing finished with errors")
 
 		return
 	}
@@ -81,11 +79,13 @@ func main() {
 		return
 	}
 
+	parser.Parse()
+
 	gen.Generator{
 		AppVersion: appVersion,
 		DirName:    dir,
-		PkgName:    parser.PkgName,
-		Data:       parser.ConstantsByType,
+		PkgName:    parser.GetPackageName(),
+		Data:       parser.GetConstantsByType(),
 		Tpl:        tpl,
 		Logger:     log,
 	}.Exec()
