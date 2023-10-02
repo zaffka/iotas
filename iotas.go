@@ -57,12 +57,12 @@ func main() {
 	}
 
 	log.Info().
-		Str(dirNameMsg, workDir).
+		Str(dirNameMsg, dir).
 		Str(appVersionMsg, appVersion).
-		Msg("Start parsing...")
+		Msg("Starting...")
 
 	parser, err := parse.NewParser(parse.Deps{
-		Dir:       dirNameMsg,
+		Dir:       dir,
 		TypeNames: typeNames,
 		Logger:    log,
 	})
