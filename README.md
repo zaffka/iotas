@@ -35,6 +35,14 @@ const (
 go install github.com/zaffka/iotas@latest
 ```
 
+## Usage
+
+```
+iotas -type=TypeName1,TypeName2 .
+```
+
+Skip last dot or replace it with path to a package
+
 ## How it works
 
 The code is searching for specific code block within the ast-tree.  
